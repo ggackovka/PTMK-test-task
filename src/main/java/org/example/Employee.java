@@ -32,9 +32,12 @@ public class Employee {
         String firstName = isMale ?
             MALES[random.nextInt(MALES.length)] :
             FEMALES[random.nextInt(FEMALES.length)];
-        String lastName = (char) ('A' + random.nextInt(26)) + "mith";
+        String lastName = (char) ('A' + random.nextInt(26)) + "";
+        while (lastName.equalsIgnoreCase("F")) {
+            lastName = (char) ('A' + random.nextInt(26)) + "";
+        }
         return new Employee(
-            lastName + " " + firstName + " " + "Olg",
+            lastName + "mith " + firstName + " " + firstName + "ovich",
             LocalDate.now().minusYears(20 + random.nextInt(40)),
             isMale ? "Male" : "Female"
         );
@@ -43,7 +46,7 @@ public class Employee {
     public static Employee generateSpecificF() {
         String firstName = MALES[random.nextInt(MALES.length)];
         return new Employee(
-            "F" + (char) ('A' + random.nextInt(26)) + "omin " + firstName + " " + "ovich",
+            "F" + (char) ('a' + random.nextInt(26)) + "omin " + firstName + " " + firstName + "ovich",
             LocalDate.now().minusYears(20 + random.nextInt(40)),
             "Male"
         );

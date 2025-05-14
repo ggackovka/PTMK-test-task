@@ -10,7 +10,7 @@ public class DBManager {
     public static final String password = "employee";
     private Connection connection;
 
-    public DBManager() {
+    public DBManager(String dbUrl, String user, String password) {
         try {
             Class.forName("org.postgresql.Driver");
             this.connection = DriverManager.getConnection(dbUrl, user, password);
@@ -26,7 +26,7 @@ public class DBManager {
             "id SERIAL PRIMARY KEY," +
             "full_name VARCHAR(255) NOT NULL," +
             "birth_date DATE NOT NULL," +
-            "gender VARCHAR(10) NOT NULL)";
+            "gender VARCHAR NOT NULL)";
         executeUpdate(sql);
         System.out.println("Employee table created");
     }
@@ -41,7 +41,7 @@ public class DBManager {
         }
     }
 
-    public List<Employee> getUniqueEmployees() throws SQLException {
+    public List<org.example.Employee> getUniqueEmployees() throws SQLException {
         String sql = "SELECT DISTINCT ON (full_name, birth_date) * FROM employees ORDER BY full_name";
         return executeQuery(sql);
     }
@@ -49,7 +49,7 @@ public class DBManager {
     public void batchInsert(List<Employee> employees) throws SQLException {
         String sql = "INSERT INTO employees (full_name, birth_date, gender) VALUES (?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            for (Employee emp : employees) {
+            for (org.example.Employee emp : employees) {
                 pstmt.setString(1, emp.fullName);
                 pstmt.setDate(2, Date.valueOf(emp.birthDate));
                 pstmt.setString(3, emp.gender);
@@ -61,22 +61,21 @@ public class DBManager {
 
     public List<Employee> getMaleWithF() throws SQLException {
         String sql = "SELECT * FROM employees " +
-            "WHERE gender = 'Male' AND split_part(full_name, ' ', 1) LIKE 'F%'";
+            "WHERE gender = 'Male' AND full_name LIKE 'F%'";
         return executeQuery(sql);
     }
 
     public void createIndex() throws SQLException {
-        String sql = "CREATE INDEX idx_gender_lastname ON employees (gender, split_part(full_name, ' ', 1)) " +
-            "WHERE (gender = 'Male' AND split_part(full_name, ' ', 1) LIKE 'F%')";
+        String sql = "create index idx_lastname_gender on employees (full_name varchar_pattern_ops, gender)";
         executeUpdate(sql);
     }
 
     private List<Employee> executeQuery(String sql) throws SQLException {
-        List<Employee> employees = new ArrayList<>();
+        List<org.example.Employee> employees = new ArrayList<>();
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
-                employees.add(new Employee(
+                employees.add(new org.example.Employee(
                     rs.getString("full_name"),
                     rs.getDate("birth_date").toLocalDate(),
                     rs.getString("gender")
@@ -86,7 +85,7 @@ public class DBManager {
         return employees;
     }
 
-    private void executeUpdate(String sql) throws SQLException {
+    public void executeUpdate(String sql) throws SQLException {
         try (Statement stmt = connection.createStatement()) {
             stmt.execute(sql);
         }
@@ -98,5 +97,13 @@ public class DBManager {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    public Connection getConnection() {
+        return connection;
+    }
+
+    public List<Employee> getAllEmployees() throws SQLException {
+        return executeQuery("SELECT * FROM employees");
     }
 }
